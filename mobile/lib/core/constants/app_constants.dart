@@ -1,6 +1,6 @@
 class AppConstants {
   // Change this to your backend URL
-  static const String baseUrl = 'http://10.0.2.2:5000/api'; // Android emulator → localhost
+  static const String baseUrl = 'http://172.22.208.88:5000/api'; // Local WiFi — phone & PC on same network
 
   static const String tokenKey = 'auth_token';
   static const String userKey = 'user_data';
