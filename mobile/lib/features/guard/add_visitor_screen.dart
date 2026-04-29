@@ -140,7 +140,7 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _SectionTitle('Company & Host'),
+                    const _SectionTitle('Company & Host'),
                     const SizedBox(height: 12),
 
                     // Company dropdown
@@ -230,7 +230,7 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
                       ),
                     ],
                     const SizedBox(height: 24),
-                    _SectionTitle('Visitor Details'),
+                    const _SectionTitle('Visitor Details'),
                     const SizedBox(height: 12),
 
                     AppTextField(
@@ -263,7 +263,7 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
                       validator: (v) => v == null || v.isEmpty ? 'Purpose required' : null,
                     ),
                     const SizedBox(height: 24),
-                    _SectionTitle('Photos (Optional)'),
+                    const _SectionTitle('Photos (Optional)'),
                     const SizedBox(height: 12),
 
                     Row(

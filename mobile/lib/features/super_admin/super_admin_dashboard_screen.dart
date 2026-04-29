@@ -51,6 +51,11 @@ class _SuperAdminDashboardScreenState extends ConsumerState<SuperAdminDashboardS
         title: const Text('Super Admin'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.people_rounded),
+            tooltip: 'Manage Users',
+            onPressed: () => context.push('/super-admin/users'),
+          ),
+          IconButton(
             icon: const Icon(Icons.business_rounded),
             tooltip: 'Manage Companies',
             onPressed: () => context.push('/super-admin/companies'),
@@ -176,6 +181,17 @@ class _SuperAdminDashboardScreenState extends ConsumerState<SuperAdminDashboardS
                               label: 'All Companies',
                               color: AppColors.primaryLight,
                               onTap: () => context.push('/super-admin/companies'),
+                            ),
+                          ),
+                        ]),
+                        const SizedBox(height: 12),
+                        Row(children: [
+                          Expanded(
+                            child: _ActionCard(
+                              icon: Icons.people_rounded,
+                              label: 'Manage Users',
+                              color: AppColors.approved,
+                              onTap: () => context.push('/super-admin/users'),
                             ),
                           ),
                         ]),

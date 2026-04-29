@@ -13,6 +13,7 @@ import '../features/admin/manage_users_screen.dart';
 import '../features/super_admin/super_admin_dashboard_screen.dart';
 import '../features/super_admin/manage_companies_screen.dart';
 import '../features/super_admin/add_company_screen.dart';
+import '../features/super_admin/super_admin_users_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -74,6 +75,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: 'companies', builder: (_, __) => const ManageCompaniesScreen()),
           GoRoute(path: 'companies/add', builder: (_, __) => const AddCompanyScreen()),
+          GoRoute(path: 'users', builder: (_, __) => const SuperAdminUsersScreen()),
         ],
       ),
     ],

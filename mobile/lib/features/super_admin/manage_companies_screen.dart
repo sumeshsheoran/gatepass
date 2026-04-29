@@ -38,10 +38,12 @@ class _ManageCompaniesScreenState extends State<ManageCompaniesScreen> {
   Future<void> _toggleActive(CompanyModel company) async {
     try {
       final updated = await CompanyService().updateCompany(company.id, {'isActive': !company.isActive});
+      if (!mounted) return;
       setState(() {
         _companies = _companies.map((c) => c.id == company.id ? updated : c).toList();
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
       );

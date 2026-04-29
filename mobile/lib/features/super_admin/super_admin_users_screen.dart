@@ -1,31 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_utils.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../core/widgets/loading_widget.dart';
+import '../../models/company_model.dart';
 import '../../models/user_model.dart';
 import '../../services/company_service.dart';
 
-class ManageUsersScreen extends ConsumerStatefulWidget {
-  const ManageUsersScreen({super.key});
+class SuperAdminUsersScreen extends StatefulWidget {
+  const SuperAdminUsersScreen({super.key});
 
   @override
-  ConsumerState<ManageUsersScreen> createState() => _ManageUsersScreenState();
+  State<SuperAdminUsersScreen> createState() => _SuperAdminUsersScreenState();
 }
 
-class _ManageUsersScreenState extends ConsumerState<ManageUsersScreen>
+class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  List<UserModel> _admins = [];
   List<UserModel> _hosts = [];
   List<UserModel> _guards = [];
+  List<CompanyModel> _companies = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _load();
   }
 
@@ -33,12 +35,16 @@ class _ManageUsersScreenState extends ConsumerState<ManageUsersScreen>
     setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
+        CompanyService().getUsers(role: 'admin'),
         CompanyService().getUsers(role: 'host'),
         CompanyService().getUsers(role: 'guard'),
+        CompanyService().getCompanies(),
       ]);
       setState(() {
-        _hosts = results[0];
-        _guards = results[1];
+        _admins = results[0] as List<UserModel>;
+        _hosts = results[1] as List<UserModel>;
+        _guards = results[2] as List<UserModel>;
+        _companies = results[3] as List<CompanyModel>;
         _isLoading = false;
       });
     } catch (_) {
@@ -49,16 +55,27 @@ class _ManageUsersScreenState extends ConsumerState<ManageUsersScreen>
   void _showAddUserDialog() {
     showDialog(
       context: context,
-      builder: (_) => _AddUserDialog(onCreated: (user) {
-        setState(() {
-          if (user.role == 'host') {
-            _hosts.insert(0, user);
-          } else if (user.role == 'guard') {
-            _guards.insert(0, user);
-          }
-        });
-      }),
+      builder: (_) => _AddUserDialog(
+        companies: _companies,
+        onCreated: (user) {
+          setState(() {
+            if (user.role == 'admin') {
+              _admins.insert(0, user);
+            } else if (user.role == 'host') {
+              _hosts.insert(0, user);
+            } else if (user.role == 'guard') {
+              _guards.insert(0, user);
+            }
+          });
+        },
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -66,12 +83,14 @@ class _ManageUsersScreenState extends ConsumerState<ManageUsersScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Users'),
+        actions: [IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _load)],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           tabs: [
+            Tab(text: 'Admins (${_admins.length})'),
             Tab(text: 'Hosts (${_hosts.length})'),
             Tab(text: 'Guards (${_guards.length})'),
           ],
@@ -89,6 +108,7 @@ class _ManageUsersScreenState extends ConsumerState<ManageUsersScreen>
           : TabBarView(
               controller: _tabController,
               children: [
+                _UserList(users: _admins, onRefresh: _load),
                 _UserList(users: _hosts, onRefresh: _load),
                 _UserList(users: _guards, onRefresh: _load),
               ],
@@ -126,7 +146,9 @@ class _UserList extends StatelessWidget {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: user.isActive ? AppColors.success.withValues(alpha: 0.1) : AppColors.error.withValues(alpha: 0.1),
+                color: user.isActive
+                    ? AppColors.success.withValues(alpha: 0.1)
+                    : AppColors.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -146,8 +168,10 @@ class _UserList extends StatelessWidget {
 }
 
 class _AddUserDialog extends StatefulWidget {
+  final List<CompanyModel> companies;
   final void Function(UserModel) onCreated;
-  const _AddUserDialog({required this.onCreated});
+
+  const _AddUserDialog({required this.companies, required this.onCreated});
 
   @override
   State<_AddUserDialog> createState() => _AddUserDialogState();
@@ -159,11 +183,27 @@ class _AddUserDialogState extends State<_AddUserDialog> {
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
-  String _role = 'host';
+  String _role = 'admin';
+  String? _selectedCompanyId;
   bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedCompanyId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a company'), backgroundColor: AppColors.error),
+      );
+      return;
+    }
     setState(() => _isLoading = true);
     try {
       final user = await CompanyService().createUser({
@@ -172,12 +212,15 @@ class _AddUserDialogState extends State<_AddUserDialog> {
         'phone': _phoneCtrl.text.trim(),
         'password': _passCtrl.text,
         'role': _role,
+        'companyIds': [_selectedCompanyId],
       });
       if (mounted) {
         Navigator.pop(context);
         widget.onCreated(user);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User created successfully'), backgroundColor: AppColors.success),
+          const SnackBar(
+              content: Text('User created successfully'),
+              backgroundColor: AppColors.success),
         );
       }
     } catch (e) {
@@ -200,36 +243,55 @@ class _AddUserDialogState extends State<_AddUserDialog> {
           key: _formKey,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             AppTextField(
-              label: 'Full Name', controller: _nameCtrl,
+              label: 'Full Name',
+              controller: _nameCtrl,
               validator: (v) => v!.isEmpty ? 'Required' : null,
             ),
             const SizedBox(height: 12),
             AppTextField(
-              label: 'Email', controller: _emailCtrl,
+              label: 'Email',
+              controller: _emailCtrl,
               keyboardType: TextInputType.emailAddress,
               validator: (v) => !v!.contains('@') ? 'Invalid email' : null,
             ),
             const SizedBox(height: 12),
             AppTextField(
-              label: 'Phone', controller: _phoneCtrl,
+              label: 'Phone',
+              controller: _phoneCtrl,
               keyboardType: TextInputType.phone,
               validator: (v) => v!.isEmpty ? 'Required' : null,
             ),
             const SizedBox(height: 12),
             AppTextField(
-              label: 'Password', controller: _passCtrl,
+              label: 'Password',
+              controller: _passCtrl,
               obscureText: true,
               validator: (v) => v!.length < 6 ? 'Min 6 chars' : null,
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _role, // ignore: deprecated_member_use
-              decoration: const InputDecoration(labelText: 'Role', filled: true, fillColor: Colors.white),
+              // ignore: deprecated_member_use
+              value: _role,
+              decoration: const InputDecoration(
+                  labelText: 'Role', filled: true, fillColor: Colors.white),
               items: const [
+                DropdownMenuItem(value: 'admin', child: Text('Admin')),
                 DropdownMenuItem(value: 'host', child: Text('Host (Employee)')),
                 DropdownMenuItem(value: 'guard', child: Text('Security Guard')),
               ],
               onChanged: (v) => setState(() => _role = v!),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              // ignore: deprecated_member_use
+              value: _selectedCompanyId,
+              decoration: const InputDecoration(
+                  labelText: 'Company *', filled: true, fillColor: Colors.white),
+              hint: const Text('Select company'),
+              items: widget.companies
+                  .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
+                  .toList(),
+              onChanged: (v) => setState(() => _selectedCompanyId = v),
             ),
           ]),
         ),
