@@ -1,6 +1,6 @@
 class AppConstants {
   // Change this to your backend URL
-  static const String baseUrl = 'http://172.22.208.88:5000/api'; // Local WiFi — phone & PC on same network
+  static const String baseUrl = 'https://beige-woodcock-254118.hostingersite.com/api';
 
   static const String tokenKey = 'auth_token';
   static const String userKey = 'user_data';
