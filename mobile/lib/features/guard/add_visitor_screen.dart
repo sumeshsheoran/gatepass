@@ -35,6 +35,7 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
   File? _idProof;
   bool _isLoading = false;
   bool _isSubmitting = false;
+  String? _loadError;
 
   @override
   void initState() {
@@ -43,7 +44,7 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
   }
 
   Future<void> _loadCompanies() async {
-    setState(() => _isLoading = true);
+    setState(() { _isLoading = true; _loadError = null; });
     try {
       final companies = await CompanyService().getCompanies();
       setState(() {
@@ -54,8 +55,11 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
         }
         _isLoading = false;
       });
-    } catch (_) {
-      setState(() => _isLoading = false);
+    } catch (e) {
+      setState(() {
+        _loadError = e.toString().replaceFirst('Exception: ', '');
+        _isLoading = false;
+      });
     }
   }
 
@@ -64,7 +68,9 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
     try {
       final hosts = await CompanyService().searchHosts(_selectedCompany!.id, q: query);
       setState(() => _hosts = hosts);
-    } catch (_) {}
+    } catch (e) {
+      setState(() => _hosts = []);
+    }
   }
 
   Future<void> _pickImage(bool isVisitorPhoto) async {
@@ -133,6 +139,23 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
       appBar: AppBar(title: const Text('New Visitor Entry')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
+          : _loadError != null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+                        const SizedBox(height: 12),
+                        Text(_loadError!, textAlign: TextAlign.center,
+                            style: const TextStyle(color: AppColors.error)),
+                        const SizedBox(height: 16),
+                        ElevatedButton(onPressed: _loadCompanies, child: const Text('Retry')),
+                      ],
+                    ),
+                  ),
+                )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Form(
