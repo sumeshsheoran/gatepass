@@ -21,7 +21,7 @@ class CompanyModel extends Equatable {
 
   factory CompanyModel.fromJson(Map<String, dynamic> json) {
     return CompanyModel(
-      id: json['_id'] ?? '',
+      id: json['id'] ?? json['_id'] ?? '',
       name: json['name'] ?? '',
       address: json['address'] ?? '',
       phone: json['phone'],

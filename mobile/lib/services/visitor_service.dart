@@ -12,6 +12,7 @@ class VisitorService {
     required String visitorName,
     required String visitorPhone,
     String? visitorEmail,
+    String? visitorCompany,
     required String purpose,
     File? visitorPhoto,
     File? idProof,
@@ -22,6 +23,7 @@ class VisitorService {
       'visitorName': visitorName,
       'visitorPhone': visitorPhone,
       if (visitorEmail != null) 'visitorEmail': visitorEmail,
+      if (visitorCompany != null) 'visitorCompany': visitorCompany,
       'purpose': purpose,
       if (visitorPhoto != null)
         'visitorPhoto': await MultipartFile.fromFile(visitorPhoto.path, filename: 'visitor_photo.jpg'),

@@ -107,6 +107,23 @@ class CompanyService {
     }
   }
 
+  Future<UserModel> updateUser(String id, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.patch('/users/$id', data: data);
+      return UserModel.fromJson(response.data['user']);
+    } catch (e) {
+      throw Exception(_err(e));
+    }
+  }
+
+  Future<void> deleteUser(String id) async {
+    try {
+      await _dio.delete('/users/$id');
+    } catch (e) {
+      throw Exception(_err(e));
+    }
+  }
+
   Future<Map<String, dynamic>> getDashboardLive({String? companyId}) async {
     try {
       final response = await _dio.get('/dashboard/live', queryParameters: {

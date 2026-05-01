@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 
 class AuthState {
   final UserModel? user;
@@ -37,11 +38,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final result = await _service.login(email, password);
       state = AuthState(user: result['user'] as UserModel);
+      _uploadFcmToken(); // fire-and-forget
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString().replaceFirst('Exception: ', ''));
       return false;
     }
+  }
+
+  Future<void> _uploadFcmToken() async {
+    try {
+      // Try up to 3 times — FCM token can be null briefly after app start
+      String? token;
+      for (int i = 0; i < 3; i++) {
+        token = await NotificationService().getToken();
+        if (token != null) break;
+        await Future.delayed(const Duration(seconds: 2));
+      }
+      if (token != null) {
+        await _service.updateFcmToken(token);
+      }
+      // Keep token fresh if FCM rotates it
+      NotificationService().onTokenRefresh.listen((t) => _service.updateFcmToken(t));
+    } catch (_) {}
   }
 
   Future<void> logout() async {

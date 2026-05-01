@@ -26,6 +26,7 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
   final _emailCtrl = TextEditingController();
   final _purposeCtrl = TextEditingController();
   final _hostSearchCtrl = TextEditingController();
+  final _visitorCompanyCtrl = TextEditingController();
 
   CompanyModel? _selectedCompany;
   UserModel? _selectedHost;
@@ -35,7 +36,9 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
   File? _idProof;
   bool _isLoading = false;
   bool _isSubmitting = false;
+  bool _hostsLoading = false;
   String? _loadError;
+  String? _hostsError;
 
   @override
   void initState() {
@@ -65,11 +68,16 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
 
   Future<void> _loadHosts([String? query]) async {
     if (_selectedCompany == null) return;
+    setState(() { _hostsLoading = true; _hostsError = null; });
     try {
       final hosts = await CompanyService().searchHosts(_selectedCompany!.id, q: query);
-      setState(() => _hosts = hosts);
+      setState(() { _hosts = hosts; _hostsLoading = false; });
     } catch (e) {
-      setState(() => _hosts = []);
+      setState(() {
+        _hosts = [];
+        _hostsLoading = false;
+        _hostsError = e.toString().replaceFirst('Exception: ', '');
+      });
     }
   }
 
@@ -106,6 +114,7 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
         visitorName: _nameCtrl.text.trim(),
         visitorPhone: _phoneCtrl.text.trim(),
         visitorEmail: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
+        visitorCompany: _visitorCompanyCtrl.text.trim().isEmpty ? null : _visitorCompanyCtrl.text.trim(),
         purpose: _purposeCtrl.text.trim(),
         visitorPhoto: _visitorPhoto,
         idProof: _idProof,
@@ -196,6 +205,19 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
                       prefixIcon: const Icon(Icons.search_rounded),
                       onChanged: _loadHosts,
                     ),
+                    if (_hostsLoading) ...[
+                      const SizedBox(height: 8),
+                      const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    ] else if (_hostsError != null) ...[
+                      const SizedBox(height: 8),
+                      Text(_hostsError!, style: const TextStyle(color: AppColors.error, fontSize: 13)),
+                    ] else if (_selectedCompany != null && _hosts.isEmpty && _selectedHost == null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'No hosts found for this company. Ask admin to add hosts.',
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      ),
+                    ],
                     if (_hosts.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Container(
@@ -276,6 +298,12 @@ class _AddVisitorScreenState extends ConsumerState<AddVisitorScreen> {
                       controller: _emailCtrl,
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: const Icon(Icons.email_outlined),
+                    ),
+                    const SizedBox(height: 16),
+                    AppTextField(
+                      label: 'Visitor\'s Company (Optional)',
+                      controller: _visitorCompanyCtrl,
+                      prefixIcon: const Icon(Icons.business_outlined),
                     ),
                     const SizedBox(height: 16),
                     AppTextField(

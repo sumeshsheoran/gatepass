@@ -183,6 +183,10 @@ class _VisitorInfoCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(visitor.visitorPhone, style: const TextStyle(color: AppColors.textSecondary)),
             const Divider(height: 32),
+            if (visitor.visitorCompany != null && visitor.visitorCompany!.isNotEmpty)
+              _DetailRow(icon: Icons.business_outlined, label: 'Company', value: visitor.visitorCompany!),
+            if (visitor.visitorCompany != null && visitor.visitorCompany!.isNotEmpty)
+              const SizedBox(height: 10),
             _DetailRow(icon: Icons.notes_rounded, label: 'Purpose', value: visitor.purpose),
             const SizedBox(height: 10),
             _DetailRow(icon: Icons.security_rounded, label: 'Logged by', value: visitor.guardName),

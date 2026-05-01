@@ -11,6 +11,7 @@ class VisitorModel extends Equatable {
   final String visitorName;
   final String visitorPhone;
   final String? visitorEmail;
+  final String? visitorCompany;
   final String? visitorPhoto;
   final String? idProofPhoto;
   final String purpose;
@@ -32,6 +33,7 @@ class VisitorModel extends Equatable {
     required this.visitorName,
     required this.visitorPhone,
     this.visitorEmail,
+    this.visitorCompany,
     this.visitorPhoto,
     this.idProofPhoto,
     required this.purpose,
@@ -45,7 +47,7 @@ class VisitorModel extends Equatable {
 
   factory VisitorModel.fromJson(Map<String, dynamic> json) {
     return VisitorModel(
-      id: json['_id'] ?? '',
+      id: json['id'] ?? json['_id'] ?? '',
       companyId: json['companyId'] ?? '',
       guardId: json['guardId'] ?? '',
       guardName: json['guardName'] ?? '',
@@ -55,6 +57,7 @@ class VisitorModel extends Equatable {
       visitorName: json['visitorName'] ?? '',
       visitorPhone: json['visitorPhone'] ?? '',
       visitorEmail: json['visitorEmail'],
+      visitorCompany: json['visitorCompany'],
       visitorPhoto: json['visitorPhoto'],
       idProofPhoto: json['idProofPhoto'],
       purpose: json['purpose'] ?? '',
