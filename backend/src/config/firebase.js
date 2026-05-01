@@ -1,11 +1,17 @@
-const admin = require('firebase-admin');
 const path = require('path');
 const fs = require('fs');
 
 let firebaseInitialized = false;
+let admin = null;
 
 const initializeFirebase = () => {
-  if (firebaseInitialized) return;
+  // Safely require firebase-admin — if not installed, server still starts
+  try {
+    admin = require('firebase-admin');
+  } catch (e) {
+    console.warn('firebase-admin not installed — push notifications disabled. Run: npm install');
+    return;
+  }
 
   let serviceAccount = null;
 

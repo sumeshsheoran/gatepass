@@ -25,7 +25,7 @@ const sendToDevice = async (fcmToken, { title, body, data = {} }) => {
     const response = await admin.messaging().send(message);
     console.log('[FCM] Success:', response);
   } catch (err) {
-    console.error('[FCM] Error:', err.code, err.message);
+    console.error('[FCM] Error:', err.code || '', err.message);
   }
 };
 
